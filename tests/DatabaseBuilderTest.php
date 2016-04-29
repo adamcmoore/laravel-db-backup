@@ -1,6 +1,6 @@
 <?php
 
-use Coreproc\LaravelDbBackup\DatabaseBuilder;
+use Adamcmoore\LaravelDbBackup\DatabaseBuilder;
 
 class DatabaseBuilderTest extends \PHPUnit_Framework_TestCase
 {
@@ -19,7 +19,7 @@ class DatabaseBuilderTest extends \PHPUnit_Framework_TestCase
         $databaseBuilder = new DatabaseBuilder();
         $database = $databaseBuilder->getDatabase($config);
 
-        $this->assertInstanceOf('Coreproc\LaravelDbBackup\Databases\MySQLDatabase', $database);
+        $this->assertInstanceOf('Adamcmoore\LaravelDbBackup\Databases\MySQLDatabase', $database);
     }
 
     public function testSqlite()
@@ -32,7 +32,7 @@ class DatabaseBuilderTest extends \PHPUnit_Framework_TestCase
         $databaseBuilder = new DatabaseBuilder();
         $database = $databaseBuilder->getDatabase($config);
 
-        $this->assertInstanceOf('Coreproc\LaravelDbBackup\Databases\SqliteDatabase', $database);
+        $this->assertInstanceOf('Adamcmoore\LaravelDbBackup\Databases\SqliteDatabase', $database);
     }
 
     public function testPostgres() {
@@ -47,7 +47,7 @@ class DatabaseBuilderTest extends \PHPUnit_Framework_TestCase
         $databaseBuilder = new DatabaseBuilder();
         $database = $databaseBuilder->getDatabase($config);
 
-        $this->assertInstanceOf('Coreproc\LaravelDbBackup\Databases\PostgresDatabase', $database);
+        $this->assertInstanceOf('Adamcmoore\LaravelDbBackup\Databases\PostgresDatabase', $database);
     }
 
     public function testUnsupported()

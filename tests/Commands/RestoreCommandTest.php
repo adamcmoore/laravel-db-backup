@@ -1,6 +1,6 @@
 <?php
 
-use Coreproc\LaravelDbBackup\Commands\RestoreCommand;
+use Adamcmoore\LaravelDbBackup\Commands\RestoreCommand;
 use Symfony\Component\Console\Tester\CommandTester;
 use Orchestra\Testbench\TestCase;
 use Mockery as m;
@@ -14,8 +14,8 @@ class RestoreCommandTest extends TestCase
     {
         parent::setUp();
 
-        $this->databaseMock = m::mock('Coreproc\LaravelDbBackup\Databases\DatabaseInterface');
-        $this->databaseBuilderMock = m::mock('Coreproc\LaravelDbBackup\DatabaseBuilder');
+        $this->databaseMock = m::mock('Adamcmoore\LaravelDbBackup\Databases\DatabaseInterface');
+        $this->databaseBuilderMock = m::mock('Adamcmoore\LaravelDbBackup\DatabaseBuilder');
         $this->databaseBuilderMock->shouldReceive('getDatabase')
                            ->once()
                            ->andReturn($this->databaseMock);
@@ -33,7 +33,7 @@ class RestoreCommandTest extends TestCase
     protected function getPackageProviders()
     {
         return array(
-            'Coreproc\LaravelDbBackup\LaravelDbBackupServiceProvider',
+            'Adamcmoore\LaravelDbBackup\LaravelDbBackupServiceProvider',
         );
     }
 

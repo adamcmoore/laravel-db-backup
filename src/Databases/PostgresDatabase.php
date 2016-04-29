@@ -1,6 +1,6 @@
-<?php namespace Coreproc\LaravelDbBackup\Databases;
+<?php namespace Adamcmoore\LaravelDbBackup\Databases;
 
-use Coreproc\LaravelDbBackup\Console;
+use Adamcmoore\LaravelDbBackup\Console;
 
 class PostgresDatabase implements DatabaseInterface
 {
@@ -20,7 +20,7 @@ class PostgresDatabase implements DatabaseInterface
 		$this->host = $host;
 	}
 
-	public function dump($destinationFile)
+	public function dump($destinationFile, $options = null)
 	{
 		$command = sprintf('PGPASSWORD=%s pg_dump -Fc --no-acl --no-owner -h %s -U %s %s > %s',
 			escapeshellarg($this->password),

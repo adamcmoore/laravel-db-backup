@@ -1,6 +1,6 @@
-<?php namespace Coreproc\LaravelDbBackup\Databases;
+<?php namespace Adamcmoore\LaravelDbBackup\Databases;
 
-use Coreproc\LaravelDbBackup\Console;
+use Adamcmoore\LaravelDbBackup\Console;
 
 class SqliteDatabase implements DatabaseInterface
 {
@@ -14,7 +14,7 @@ class SqliteDatabase implements DatabaseInterface
 		$this->databaseFile = $databaseFile;
 	}
 
-	public function dump($destinationFile)
+	public function dump($destinationFile, $options = null)
 	{
 		$command = sprintf('cp %s %s',
 			escapeshellarg($this->databaseFile),

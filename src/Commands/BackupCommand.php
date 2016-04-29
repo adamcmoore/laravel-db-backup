@@ -1,10 +1,11 @@
-<?php namespace Coreproc\LaravelDbBackup\Commands;
+<?php namespace Adamcmoore\LaravelDbBackup\Commands;
 
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use AWS;
 use Config;
 use Guzzle\Http;
+use Carbon\Carbon;
 
 class BackupCommand extends BaseCommand
 {
@@ -39,21 +40,23 @@ class BackupCommand extends BaseCommand
             } // It's relative path?
             else {
                 $this->filePath = getcwd() . '/' . $customFilename;
-                $this->fileName = basename($this->filePath) . '_' . time();
+                $this->fileName = basename($this->filePath) . '_' . Carbon::now()->toDateTimeString();
             }
         } else {
-            $this->fileName = $dbConnectionConfig['database'] . '_' . time() . '.' . $database->getFileExtension();
+            $this->fileName = $dbConnectionConfig['database'] . '_' . Carbon::now()->toDateTimeString() . '.' . $database->getFileExtension();
             $this->filePath = rtrim($this->getDumpsPath(), '/') . '/' . $this->fileName;
         }
 
-        $status = $database->dump($this->filePath);
+        $dumpOptions = $this->argument('dump-options');
+
+        $status = $database->dump($this->filePath, $dumpOptions);
 
         if ($status === true) {
 
             // create zip archive
             if ($this->option('archive')) {
                 $zip = new \ZipArchive();
-                $zipFileName = $dbConnectionConfig['database'] . '_' . time() . '.zip';
+                $zipFileName = $dbConnectionConfig['database'] . '_' . Carbon::now()->toDateTimeString() . '.zip';
                 $zipFilePath = dirname($this->filePath) . '/' . $zipFileName;
 
                 if ($zip->open($zipFilePath, \ZipArchive::CREATE) === true) {
@@ -123,6 +126,7 @@ class BackupCommand extends BaseCommand
             array('disable-slack', null, InputOption::VALUE_NONE, 'Number of days to retain backups'),
             array('archive', null, InputOption::VALUE_OPTIONAL, 'Create zip archive'),
             array('s3-only', null, InputOption::VALUE_OPTIONAL, 'Delete local archive after S3 upload'),
+            array('dump-options', null, InputOption::VALUE_OPTIONAL, 'Database dump additional options'),
         );
     }
 
@@ -216,7 +220,7 @@ class BackupCommand extends BaseCommand
         $this->info('Sending slack notification..');
         $data['text'] = "A backup of the {$databaseConfig['database']} database at {$databaseConfig['host']} has been created.";
         $data['username'] = "Database Backup";
-        $data['icon_url'] = "https://s3-ap-northeast-1.amazonaws.com/coreproc/images/icon_database.png";
+        $data['icon_url'] = "https://s3-ap-northeast-1.amazonaws.com/Adamcmoore/images/icon_database.png";
 
         $content = json_encode($data);
 

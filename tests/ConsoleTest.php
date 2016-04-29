@@ -1,6 +1,6 @@
 <?php
 
-use Coreproc\LaravelDbBackup\Console;
+use Adamcmoore\LaravelDbBackup\Console;
 
 class ConsoleTest extends \PHPUnit_Framework_TestCase
 {

@@ -1,4 +1,4 @@
-<?php namespace Coreproc\LaravelDbBackup\Databases;
+<?php namespace Adamcmoore\LaravelDbBackup\Databases;
 
 interface DatabaseInterface
 {
@@ -7,7 +7,7 @@ interface DatabaseInterface
 	 * 
 	 * @return boolean
 	 */
-	public function dump($destinationFile);
+	public function dump($destinationFile, $options = null);
 
 	/**
 	 * Restore a database dump

@@ -1,9 +1,7 @@
 Laravel DB Backup
 =================
 
-[![Join the chat at https://gitter.im/CoreProc/laravel-db-backup](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/CoreProc/laravel-db-backup?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-Artisan command to backup your database. Built for Laravel 4.2. Originally forked from [schickling/laravel-backup](https://github.com/schickling/laravel-backup) but modified to push in more features like data retention from Amazon S3 and Slack notifications.
+Artisan command to backup your database. Built for Laravel 4.2. Originally forked from [coreproc/laravel-db-backup](https://github.com/CoreProc/laravel-db-backup) but modified to push in more features like extra mysql-dump options
 
 ## Quick start
 
@@ -11,13 +9,13 @@ Artisan command to backup your database. Built for Laravel 4.2. Originally forke
 
 In the `require` key of `composer.json` file add the following
 
-    "coreproc/laravel-db-backup": "0.*"
+    "Adamcmoore/laravel-db-backup": "0.*"
 
 Run the Composer update comand
 
     $ composer update
 
-In your `app/config/app.php` add `'Coreproc\LaravelDbBackup\LaravelDbBackupServiceProvider'` to the end of the `$providers` array
+In your `app/config/app.php` add `'Adamcmoore\LaravelDbBackup\LaravelDbBackupServiceProvider'` to the end of the `$providers` array
 
     'providers' => array(
 
@@ -25,7 +23,7 @@ In your `app/config/app.php` add `'Coreproc\LaravelDbBackup\LaravelDbBackupServi
         'Illuminate\Auth\AuthServiceProvider',
         ...
         'EllipseSynergie\ApiResponse\Laravel\ResponseServiceProvider',
-        'Coreproc\LaravelDbBackup\LaravelDbBackupServiceProvider',
+        'Adamcmoore\LaravelDbBackup\LaravelDbBackupServiceProvider',
 
     ),
 
@@ -122,3 +120,9 @@ You can change the name of the backup file with the `--filename` option. All fil
 To create zip archive instead of raw .sql file, set `--archive` value.
 
 `php artisan db:backup --database=dbconnection2 --data-retention=30 --archive=true` 
+
+### Extra MySQL dump options
+
+You can add extra options for MySQL dump options with the `--dump-options` option. The options should be enclosed in quotations.
+
+`php artisan db:backup --dump-options='--flush-logs --master-data=2'` 

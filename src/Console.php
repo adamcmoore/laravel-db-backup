@@ -1,4 +1,4 @@
-<?php namespace Coreproc\LaravelDbBackup;
+<?php namespace Adamcmoore\LaravelDbBackup;
 
 use Symfony\Component\Process\Process;
 

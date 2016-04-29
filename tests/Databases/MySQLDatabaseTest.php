@@ -1,6 +1,6 @@
 <?php
 
-use Coreproc\LaravelDbBackup\Databases\MySQLDatabase;
+use Adamcmoore\LaravelDbBackup\Databases\MySQLDatabase;
 use Mockery as m;
 
 class MySQLDatabaseTest extends \PHPUnit_Framework_TestCase
@@ -11,7 +11,7 @@ class MySQLDatabaseTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->console = m::mock('Coreproc\LaravelDbBackup\Console');
+        $this->console = m::mock('Adamcmoore\LaravelDbBackup\Console');
         $this->database = new MySQLDatabase($this->console, 'testDatabase', 'testUser', 'password', 'localhost', '3306');
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-use Coreproc\LaravelDbBackup\Databases\SqliteDatabase;
+use Adamcmoore\LaravelDbBackup\Databases\SqliteDatabase;
 use Mockery as m;
 
 class SqliteDatabaseTest extends \PHPUnit_Framework_TestCase
@@ -11,7 +11,7 @@ class SqliteDatabaseTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->console = m::mock('Coreproc\LaravelDbBackup\Console');
+        $this->console = m::mock('Adamcmoore\LaravelDbBackup\Console');
         $this->database = new SqliteDatabase($this->console, 'testDatabase.sqlite');
     }
 

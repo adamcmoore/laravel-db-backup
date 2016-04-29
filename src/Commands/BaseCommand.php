@@ -1,9 +1,9 @@
-<?php namespace Coreproc\LaravelDbBackup\Commands;
+<?php namespace Adamcmoore\LaravelDbBackup\Commands;
 
 use Illuminate\Console\Command;
 use Config;
-use Coreproc\LaravelDbBackup\DatabaseBuilder;
-use Coreproc\LaravelDbBackup\ConsoleColors;
+use Adamcmoore\LaravelDbBackup\DatabaseBuilder;
+use Adamcmoore\LaravelDbBackup\ConsoleColors;
 
 class BaseCommand extends Command
 {

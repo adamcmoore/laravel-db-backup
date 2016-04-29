@@ -1,6 +1,6 @@
-<?php namespace Coreproc\LaravelDbBackup\Databases;
+<?php namespace Adamcmoore\LaravelDbBackup\Databases;
 
-use Coreproc\LaravelDbBackup\Console;
+use Adamcmoore\LaravelDbBackup\Console;
 use Config;
 
 class MySQLDatabase implements DatabaseInterface
@@ -23,13 +23,14 @@ class MySQLDatabase implements DatabaseInterface
 		$this->port = $port;
 	}
 
-	public function dump($destinationFile)
+	public function dump($destinationFile, $options = null)
 	{
-		$command = sprintf('mysqldump --user=%s --password=%s --host=%s --port=%s %s > %s',
+		$command = sprintf('mysqldump --user=%s --password=%s --host=%s --port=%s %s %s > %s',
 			escapeshellarg($this->user),
 			escapeshellarg($this->password),
 			escapeshellarg($this->host),
 			escapeshellarg($this->port),
+			escapeshellarg($options),
 			escapeshellarg($this->database),
 			escapeshellarg($destinationFile)
 		);

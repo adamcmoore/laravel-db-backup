@@ -1,6 +1,6 @@
 <?php
 
-use Coreproc\LaravelDbBackup\Databases\PostgresDatabase;
+use Adamcmoore\LaravelDbBackup\Databases\PostgresDatabase;
 use Mockery as m;
 
 class PostgresDatabaseTest extends \PHPUnit_Framework_TestCase
@@ -11,7 +11,7 @@ class PostgresDatabaseTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->console = m::mock('Coreproc\LaravelDbBackup\Console');
+        $this->console = m::mock('Adamcmoore\LaravelDbBackup\Console');
         $this->database = new PostgresDatabase($this->console, 'testDatabase', 'testUser', 'password', 'localhost');
     }
 
