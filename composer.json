@@ -20,7 +20,8 @@
         "symfony/finder": "2.*",
         "illuminate/support": "4.2.*",
         "illuminate/database": "4.2.*",
-        "aws/aws-sdk-php-laravel": "1.*"
+        "aws/aws-sdk-php-laravel": "1.*",
+        "nesbot/carbon": "~1.14"
     },
     "require-dev": {
         "laravel/framework": "4.2.*",

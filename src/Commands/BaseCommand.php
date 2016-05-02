@@ -20,7 +20,6 @@ class BaseCommand extends Command
 
     public function getDatabase($databaseDriver)
     {
-        //$database   = $database ?: Config::get('database.default');
         $realConfig = Config::get('database.connections.' . $databaseDriver);
 
         return $this->databaseBuilder->getDatabase($realConfig);
@@ -29,6 +28,17 @@ class BaseCommand extends Command
     protected function getDumpsPath()
     {
         return Config::get('laravel-db-backup::path');
+    }
+    
+    protected function getS3DumpsPath()
+    {
+        if ($this->option('path-s3')) {
+            $path = $this->option('path-s3');
+        } else {
+            $path = Config::get('laravel-db-backup::s3.path', 'databases');
+        }
+
+        return $path;
     }
 
 }

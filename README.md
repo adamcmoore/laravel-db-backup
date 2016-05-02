@@ -1,7 +1,14 @@
 Laravel DB Backup
 =================
 
-Artisan command to backup your database. Built for Laravel 4.2. Originally forked from [coreproc/laravel-db-backup](https://github.com/CoreProc/laravel-db-backup) but modified to push in more features like extra mysql-dump options
+Artisan command to backup your database. Built for Laravel 4.2. Originally forked from [coreproc/laravel-db-backup](https://github.com/CoreProc/laravel-db-backup) but modified to push in more features:
+
+- Backup with mysqldump options using `--dump-options='--flush-logs --master-data=2'`
+- Backup fires event `laravel-db-backup.complete`
+- Friendlier filenames using human readable date formats rather than timestamp
+- Restore from AWS S3 by using `--restore-s3=bucketname`
+- Restore binlogs using `--binlog=true` or `--binlog='2016-04-28 13:00:00'` to restore to a point in time
+- Restore from zip file
 
 ## Quick start
 
@@ -126,3 +133,33 @@ To create zip archive instead of raw .sql file, set `--archive` value.
 You can add extra options for MySQL dump options with the `--dump-options` option. The options should be enclosed in quotations.
 
 `php artisan db:backup --dump-options='--flush-logs --master-data=2'` 
+
+## Subscribing to the backup complete event
+
+You can listen to the event raised once the backup has completed. $status will either be `true` or a string error message. Useful for sending email notifications.
+
+```
+Event::listen('adamcmoore.laravel-db-backup', function($status, $filepath, $filename, $config) {
+    
+    // Handle the event here
+
+});
+```
+
+## Restore from MySQL binlogs
+
+Specifying the `--binlog` option will restore the database from the bin logs. The option can either be true, or optionally a date-time string to restore to a certain point in time, like so:
+
+`db:restore --binlog='2016-04-28 13:00:00' dumpname.sql`
+
+The dump selected should contain `MASTER_LOG_FILE` entry. The location of the binlogs defaults to `/var/log/mysql/` but may be overriden in the published config file.
+
+## Restore from AWS S3 bucket
+
+List all dumps from AWS S3 like so:
+
+`php artisan db:restore --restore-s3=bucketname`
+
+Restore dump from AWS S3 like so:
+
+`php artisan db:restore --restore-s3=bucketname dump-name.zip`

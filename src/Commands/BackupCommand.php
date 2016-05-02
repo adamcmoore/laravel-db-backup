@@ -2,6 +2,7 @@
 
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Illuminate\Support\Facades\Event;
 use AWS;
 use Config;
 use Guzzle\Http;
@@ -31,6 +32,7 @@ class BackupCommand extends BaseCommand
         $this->checkDumpFolder();
 
         $customFilename = $this->argument('filename');
+        $filenameTime = Carbon::now()->format('Y-m-d-H-i-s');
 
         if ($customFilename) {
             // Is it an absolute path?
@@ -40,14 +42,14 @@ class BackupCommand extends BaseCommand
             } // It's relative path?
             else {
                 $this->filePath = getcwd() . '/' . $customFilename;
-                $this->fileName = basename($this->filePath) . '_' . Carbon::now()->toDateTimeString();
+                $this->fileName = basename($this->filePath) . '_' . $filenameTime;
             }
         } else {
-            $this->fileName = $dbConnectionConfig['database'] . '_' . Carbon::now()->toDateTimeString() . '.' . $database->getFileExtension();
+            $this->fileName = $dbConnectionConfig['database'] . '_' . $filenameTime . '.' . $database->getFileExtension();
             $this->filePath = rtrim($this->getDumpsPath(), '/') . '/' . $this->fileName;
         }
 
-        $dumpOptions = $this->argument('dump-options');
+        $dumpOptions = $this->option('dump-options');
 
         $status = $database->dump($this->filePath, $dumpOptions);
 
@@ -56,11 +58,11 @@ class BackupCommand extends BaseCommand
             // create zip archive
             if ($this->option('archive')) {
                 $zip = new \ZipArchive();
-                $zipFileName = $dbConnectionConfig['database'] . '_' . Carbon::now()->toDateTimeString() . '.zip';
+                $zipFileName = $dbConnectionConfig['database'] . '_' . $filenameTime . '.zip';
                 $zipFilePath = dirname($this->filePath) . '/' . $zipFileName;
 
                 if ($zip->open($zipFilePath, \ZipArchive::CREATE) === true) {
-                    $zip->addFile($this->filePath);
+                    $zip->addFile($this->filePath, basename($this->filePath));
                     $zip->close();
 
                     // delete .sql files
@@ -82,7 +84,8 @@ class BackupCommand extends BaseCommand
             // upload to s3
             if ($this->option('upload-s3')) {
                 $this->uploadS3();
-                $this->line($this->colors->getColoredString("\n" . 'Upload complete.' . "\n", 'green'));
+                $this->line($this->colors->getColoredString("\n" . 'Upload to S3 successful.' . "\n", 'green'));
+                
                 if ($this->option('data-retention-s3')) {
                     $this->dataRetentionS3();
                 }
@@ -93,6 +96,11 @@ class BackupCommand extends BaseCommand
                 }
             }
 
+
+            if ($this->option('data-retention')) {
+                $this->dataRetention();
+            }
+        
             if ( ! empty($dbConnectionConfig['slackWebhookPath'])) {
                 $disableSlackOption = $this->option('disable-slack');
                 if ( ! $disableSlackOption) $this->notifySlack($dbConnectionConfig);
@@ -102,6 +110,15 @@ class BackupCommand extends BaseCommand
             // todo
             $this->line(sprintf($this->colors->getColoredString("\n" . 'Database backup failed. %s' . "\n", 'red'), $status));
         }
+
+
+        // Raise event to notify success (used to setup custom alerts such as email)
+        Event::fire('laravel-db-backup.complete', [
+            'status'    => $status,
+            'filepath'  => $this->filePath,
+            'filename'  => $this->fileName,
+            'config'    => $dbConnectionConfig,
+        ]);
     }
 
     /**
@@ -122,8 +139,9 @@ class BackupCommand extends BaseCommand
             array('database', null, InputOption::VALUE_REQUIRED, 'The database connection to backup'),
             array('upload-s3', 'u', InputOption::VALUE_OPTIONAL, 'Upload the dump to your S3 bucket'),
             array('path-s3', null, InputOption::VALUE_OPTIONAL, 'The folder in which to save the backup'),
-            array('data-retention-s3', null, InputOption::VALUE_OPTIONAL, 'Number of days to retain backups'),
-            array('disable-slack', null, InputOption::VALUE_NONE, 'Number of days to retain backups'),
+            array('data-retention', null, InputOption::VALUE_OPTIONAL, 'Number of days to retain backups'),
+            array('data-retention-s3', null, InputOption::VALUE_OPTIONAL, 'Number of days to retain S3 backups'),
+            array('disable-slack', null, InputOption::VALUE_NONE, 'Manually disable Slack notifications'),
             array('archive', null, InputOption::VALUE_OPTIONAL, 'Create zip archive'),
             array('s3-only', null, InputOption::VALUE_OPTIONAL, 'Delete local archive after S3 upload'),
             array('dump-options', null, InputOption::VALUE_OPTIONAL, 'Database dump additional options'),
@@ -151,16 +169,56 @@ class BackupCommand extends BaseCommand
         ));
     }
 
-    protected function getS3DumpsPath()
+
+    private function dataRetention()
     {
-        if ($this->option('path-s3')) {
-            $path = $this->option('path-s3');
-        } else {
-            $path = Config::get('laravel-db-backup::s3.path', 'databases');
+        if ( ! $this->option('data-retention')) 
+        {
+            return;
         }
 
-        return $path;
+        $dataRetention = (int) $this->option('data-retention');
+
+        if ($dataRetention <= 0) 
+        {
+            $this->error("Data retention should be a number");
+            return;
+        }
+
+
+        $timestampForRetention = strtotime('-' . $dataRetention . ' days');
+        $this->info('Retaining data where date is greater than ' . date('Y-m-d', $timestampForRetention));
+        
+        $files = array_merge(
+            glob($this->getDumpsPath()."*.sql"), 
+            glob($this->getDumpsPath()."*.zip")
+        );
+        $deleteCount = 0;
+        foreach ($files as $file) 
+        {
+            if (!is_file($file)) continue;
+            
+            if ($timestampForRetention > filemtime($file)) 
+            {
+                try 
+                {
+                    unlink($file);
+                    $this->info("The following file is beyond data retention and was deleted: {$file}");
+                } 
+                catch (Exception $e) {}
+                
+                $deleteCount++;
+            }
+        }
+
+
+        if ($deleteCount > 0) {
+            $this->info($deleteCount . ' file(s) were deleted.');
+        }
+
+        $this->info("");
     }
+
 
     private function dataRetentionS3()
     {
@@ -171,7 +229,7 @@ class BackupCommand extends BaseCommand
         $dataRetention = (int) $this->option('data-retention-s3');
 
         if ($dataRetention <= 0) {
-            $this->error("Data retention should be a number");
+            $this->error("S3 Data retention should be a number");
             return;
         }
 
@@ -184,21 +242,16 @@ class BackupCommand extends BaseCommand
         ));
 
         $timestampForRetention = strtotime('-' . $dataRetention . ' days');
-        $this->info('Retaining data where date is greater than ' . date('Y-m-d', $timestampForRetention));
+        $this->info('Retaining S3 data where date is greater than ' . date('Y-m-d', $timestampForRetention));
 
         $contents = $list['Contents'];
 
         $deleteCount = 0;
         foreach ($contents as $fileArray) {
-            $filePathArray = explode('/', $fileArray['Key']);
-            $filename = $filePathArray[count($filePathArray) - 1];
+            $fileTimestamp = Carbon::parse($fileArray['LastModified']);
 
-            $filenameExplode = explode('_', $filename);
-
-            $fileTimestamp = explode('.', $filenameExplode[count($filenameExplode) - 1])[0];
-
-            if ($timestampForRetention > $fileTimestamp) {
-                $this->info("The following file is beyond data retention and was deleted: {$fileArray['Key']}");
+            if ($timestampForRetention > $fileTimestamp->timestamp) {
+                $this->info("The following S3 file is beyond data retention and was deleted: {$fileArray['Key']}");
                 // delete
                 $s3->deleteObject(array(
                     'Bucket' => $bucket,
@@ -209,7 +262,7 @@ class BackupCommand extends BaseCommand
         }
 
         if ($deleteCount > 0) {
-            $this->info($deleteCount . ' file(s) were deleted.');
+            $this->info($deleteCount . ' S3 file(s) were deleted.');
         }
 
         $this->info("");
