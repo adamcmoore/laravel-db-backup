@@ -61,18 +61,46 @@ class BackupCommand extends BaseCommand
                 $zipFileName = $dbConnectionConfig['database'] . '_' . $filenameTime . '.zip';
                 $zipFilePath = dirname($this->filePath) . '/' . $zipFileName;
 
-                if ($zip->open($zipFilePath, \ZipArchive::CREATE) === true) {
-                    $zip->addFile($this->filePath, basename($this->filePath));
-                    $zip->close();
+                try {
+                    if ($zip->open($zipFilePath, \ZipArchive::CREATE) === true) {
+                        $zip->addFile($this->filePath, basename($this->filePath));
+                        $zip->close();
+                    } else {
+                        throw new \Exception("Error opening zip archive for writing");                        
+                    }                    
+                } catch (Exception $e) {
+                    $this->line(sprintf($this->colors->getColoredString("\n" . 'Archiving failed: %s' . "\n", 'red'), $e->getMessage()));                    
+                }
+                
 
+                // Verify the zip file was created correctly
+                $verifyZip = $zip->open($zipFilePath, \ZipArchive::CHECKCONS);
+                if ($verifyZip === TRUE) {
                     // delete .sql files
                     unlink($this->filePath);
 
                     // change filename and filepath to zip
                     $this->filePath = $zipFilePath;
                     $this->fileName = $zipFileName;
+
+                    $this->line($this->colors->getColoredString("\n" . 'Archiving successful' . "\n", 'green'));
+
+                } else {
+                    switch($verifyZip) {
+                        case \ZipArchive::ER_NOZIP:
+                            $zipError = 'not a zip archive';
+                        case \ZipArchive::ER_INCONS :
+                            $zipError = 'consistency check failed';
+                        case \ZipArchive::ER_CRC :
+                            $zipError = 'checksum failed';
+                        default:
+                           $zipError = 'error ' . $verifyZip;
+                    }
+
+                    $this->line(sprintf($this->colors->getColoredString("\n" . 'Archiving failed: %s' . "\n", 'red'), $zipError));
                 }
             }
+
 
             // display success message
             if ($customFilename) {
